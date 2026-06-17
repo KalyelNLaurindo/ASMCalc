@@ -2,10 +2,10 @@
 
 ### **High-Performance Low-Level Interactive Calculation Engine**
 
-[![Stack Version](https://img.shields.io/badge/Assembly-x86_32-blue?style=for-the-badge&logo=assembly)](https://nasm.us)
-[![Architecture](https://img.shields.io/badge/Architecture-Modular_ASM-8A2BE2?style=for-the-badge)](#)
-[![Dependencies](https://img.shields.io/badge/Dependencies-msvcrt.dll-success?style=for-the-badge)](#)
-[![Testing Paradigm](https://img.shields.io/badge/Testing-TDD_C_Harness-green?style=for-the-badge)](#)
+[![Stack Version](https://img.shields.io/badge/Assembly-x86__32-blue?style=for-the-badge&logo=assembly)](https://nasm.us)
+[![Architecture](https://img.shields.io/badge/Architecture-Modular__ASM-8A2BE2?style=for-the-badge)](#)
+[![Dependencies](https://img.shields.io/badge/Dependencies-msvcrt.dll-green?style=for-the-badge)](#)
+[![Testing Paradigm](https://img.shields.io/badge/Testing-TDD__C__Harness-brightgreen?style=for-the-badge)](#)
 
 ---
 
@@ -100,14 +100,17 @@ The interface is an interactive console loop styled with ANSI colors (Bold Cyan 
 ```
 ASMCalc/
 ├── context/                   # Architecture & Discovery specs
-│   ├── backlog/               # Prioritized agile tasks (TSK-01 to TSK-06)
+│   ├── backlog/               # Prioritized agile tasks (TSK-01 to TSK-09)
 │   │   ├── README.md          # Agile Backlog & Kanban board status
 │   │   ├── TSK-01.md          # Toolchain Verification
 │   │   ├── TSK-02.md          # Core Arithmetic Procedures
 │   │   ├── TSK-03.md          # C Test Harness Setup
 │   │   ├── TSK-04.md          # Low-Level CLI Input/Output Handlers
 │   │   ├── TSK-05.md          # Main Console Router Menu Loop
-│   │   └── TSK-06.md          # Expanded Math Operations & ANSI Color Interface
+│   │   ├── TSK-06.md          # Expanded Math Operations & ANSI Color Interface
+│   │   ├── TSK-07.md          # FPU Core Arithmetic Engine
+│   │   ├── TSK-08.md          # Float Parsing and Formatting Routines
+│   │   └── TSK-09.md          # CLI Menu & ANS Adaptation for Floats
 │   ├── Problem Discovery - ASMCalc.md
 │   ├── Solution Architecture - ASMCalc.md
 │   ├── Software Design - ASMCalc.md
@@ -124,6 +127,8 @@ ASMCalc/
 │
 ├── Makefile                   # GNU Make compiler/linker instructions
 ├── README.md                  # Developer manual
+├── claude.md                  # Claude/AI reference file
+├── setup_env.bat              # Environment Bootstrap script
 └── .gitignore                 # Excludes .obj and .exe artifacts
 ```
 
@@ -176,4 +181,4 @@ mingw32-make clean
 
 🏁 **End of Document:** This repository README serves as the definitive engineering portal for the ASMCalc ecosystem.
 
-Made with ❤️ by **Kalyel N. Laurindo / Software Engineer**
+Made with ❤️ by [Kalyel N. Laurindo](https://github.com/KalyelNLaurindo) (Lead Software Engineer & Contributor)
