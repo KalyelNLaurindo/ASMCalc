@@ -1,17 +1,17 @@
 ; ==============================================================================
-;                      ASMCalc - Input/Output Engine (x86 32-bit)
+;                      ASMCalc - Input/Output Engine (x86 32-bit FPU)
 ; ==============================================================================
 ; Author: Kalyel N. Laurindo / Software Engineer
 ; Date: 2026-06-17
-; Description: Character and string conversion routines linked with standard 
-;              C Runtime Library (msvcrt.dll) for console interface.
+; Description: Character and double-precision string conversion routines linked 
+;              with standard C Runtime Library (msvcrt.dll) for FPU interface.
 ; ==============================================================================
 
 bits 32
 
 section .data
-    ; Format specifier for printing strings
-    fmt_str db "%s", 0
+    fmt_str   db "%s", 0
+    fmt_float db "%f", 0
 
 section .text
 
@@ -19,21 +19,23 @@ section .text
 extern _printf
 extern _getchar
 extern _fflush
+extern _atof
+extern _sprintf
+extern _atoi
 
 ; Exported symbols
 global _atoi_conv
-global _itoa_conv
+global _atof_conv
+global _ftoa_conv
 global _print_str
 global _read_str
 
 ; ------------------------------------------------------------------------------
-; atoi_conv(const char *str, int *out_val) -> returns 0 on success, -1 on error
+; atof_conv(const char *str, double *out_val) -> returns 0 on success, -1 on error
 ; ------------------------------------------------------------------------------
-_atoi_conv:
+_atof_conv:
     push ebp
     mov ebp, esp
-
-    ; Preserve registers
     push ebx
     push esi
     push edi
@@ -41,113 +43,100 @@ _atoi_conv:
     mov esi, [ebp + 8]    ; esi = str
     mov edi, [ebp + 12]   ; edi = out_val (pointer)
 
-    ; Initialize
-    xor eax, eax          ; Current parsed value = 0
-    xor ecx, ecx          ; Sign indicator (0 = positive, 1 = negative)
-    xor edx, edx          ; Digit count
-
     ; Skip leading spaces
-.skip_spaces:
+.skip_leading:
     movzx ebx, byte [esi]
     cmp ebx, ' '
-    je .next_space
+    je .next_leading
     cmp ebx, 9            ; '\t'
-    je .next_space
+    je .next_leading
     jmp .check_sign
 
-.next_space:
+.next_leading:
     inc esi
-    jmp .skip_spaces
+    jmp .skip_leading
 
 .check_sign:
     cmp ebx, '-'
-    je .is_negative
+    je .has_sign
     cmp ebx, '+'
-    je .is_positive
-    jmp .parse_digits
+    je .has_sign
+    jmp .check_digits_start
 
-.is_negative:
-    mov ecx, 1
+.has_sign:
     inc esi
-    jmp .load_next
-
-.is_positive:
-    inc esi
-
-.load_next:
     movzx ebx, byte [esi]
 
-.parse_digits:
-    ; Check if string is empty/finished
-    test ebx, ebx
-    jz .check_empty
+.check_digits_start:
+    xor ecx, ecx          ; Digit counter = 0
+    xor edx, edx          ; Dot counter = 0
 
-    ; Validate it's a decimal digit
+.parse_loop:
+    cmp ebx, '.'
+    je .handle_dot
+
     cmp ebx, '0'
-    jl .check_trailing_whitespace
+    jl .check_trailing
     cmp ebx, '9'
-    jg .check_trailing_whitespace
+    jg .check_trailing
 
-    ; Convert char to numeric value
-    sub ebx, '0'
-    inc edx               ; Increment digit count
-
-    ; Guard against overflow: value = value * 10 + digit
-    ; Check if multiplying by 10 overflows
-    imul eax, 10
-    jo .overflow_err      ; Jump if signed overflow occurs
-
-    ; Add new digit
-    add eax, ebx
-    jo .overflow_err      ; Jump if signed overflow occurs
-
+    inc ecx               ; Increment digit counter
     inc esi
     movzx ebx, byte [esi]
-    jmp .parse_digits
+    jmp .parse_loop
 
-.check_trailing_whitespace:
-    test edx, edx         ; Did we parse any digits?
-    jz .invalid_char      ; No digits parsed is an error
-
-.whitespace_loop:
+.handle_dot:
+    inc edx               ; Increment dot counter
+    cmp edx, 1
+    jg .invalid           ; More than one dot is invalid
+    inc esi
     movzx ebx, byte [esi]
-    test ebx, ebx
-    jz .apply_sign        ; Success: reached end of string
+    jmp .parse_loop
+
+.check_trailing:
+    ; Must have parsed at least one digit
+    test ecx, ecx
+    jz .invalid
+
+.skip_trailing:
+    test ebx, ebx         ; End of string?
+    jz .valid
 
     cmp ebx, ' '
-    je .next_whitespace
+    je .next_trailing
     cmp ebx, 9            ; '\t'
-    je .next_whitespace
+    je .next_trailing
     cmp ebx, 10           ; '\n'
-    je .next_whitespace
+    je .next_trailing
     cmp ebx, 13           ; '\r'
     je .next_whitespace
-    jmp .invalid_char     ; Any other char is invalid
+    jmp .invalid          ; Any other char at the end is invalid
 
 .next_whitespace:
+    ; Treat carriage return like standard whitespace and ignore it
     inc esi
-    jmp .whitespace_loop
+    movzx ebx, byte [esi]
+    jmp .skip_trailing
 
-.check_empty:
-    test edx, edx         ; Did we parse any digits?
-    jz .invalid_char      ; No digits parsed is an error
-    jmp .apply_sign
+.next_trailing:
+    inc esi
+    movzx ebx, byte [esi]
+    jmp .skip_trailing
 
-.invalid_char:
+.invalid:
     mov eax, -1
     jmp .done
 
-.overflow_err:
-    mov eax, -1
-    jmp .done
+.valid:
+    ; Call atof(str)
+    push dword [ebp + 8]
+    call _atof
+    add esp, 4            ; Double result is now in ST(0)
 
-.apply_sign:
-    test ecx, ecx
-    jz .store_val
-    neg eax               ; Apply negative sign
-
-.store_val:
-    mov [edi], eax        ; Save to out_val pointer
+    ; Store ST(0) (double) into *out_val
+    mov eax, [ebp + 12]   ; out_val pointer
+    fstp qword [eax]      ; Store qword and pop FPU stack
+    
     xor eax, eax          ; Return 0 (success)
 
 .done:
@@ -157,66 +146,21 @@ _atoi_conv:
     pop ebp
     ret
 
-section .text
-
 ; ------------------------------------------------------------------------------
-; itoa_conv(int val, char *buffer) -> converts integer to null-terminated string
+; ftoa_conv(double val, char *buffer) -> formats double to string via sprintf
 ; ------------------------------------------------------------------------------
-_itoa_conv:
+_ftoa_conv:
     push ebp
     mov ebp, esp
-
     push ebx
-    push esi
-    push edi
 
-    mov eax, [ebp + 8]    ; val
-    mov edi, [ebp + 12]   ; buffer pointer
-    mov esi, edi          ; Save start of buffer
+    push dword [ebp + 12] ; val (high 32-bit)
+    push dword [ebp + 8]  ; val (low 32-bit)
+    push fmt_float        ; "%f"
+    push dword [ebp + 16] ; buffer
+    call _sprintf
+    add esp, 16
 
-    ; Check if value is zero
-    cmp eax, 0
-    jne .check_negative
-    mov byte [edi], '0'
-    mov byte [edi + 1], 0
-    jmp .done
-
-.check_negative:
-    cmp eax, 0
-    jge .start_conversion
-    mov byte [edi], '-'   ; Add negative prefix
-    inc edi
-    neg eax               ; Make positive
-
-.start_conversion:
-    xor ecx, ecx          ; Count of digits pushed onto stack
-    mov ebx, 10           ; Divisor
-
-.div_loop:
-    test eax, eax
-    jz .pop_digits
-    xor edx, edx          ; Clear EDX for unsigned div
-    div ebx               ; EAX = quotient, EDX = remainder
-    add edx, '0'          ; Convert remainder to ASCII char
-    push edx              ; Push digit char onto stack
-    inc ecx
-    jmp .div_loop
-
-.pop_digits:
-    test ecx, ecx
-    jz .null_terminate
-    pop edx
-    mov [edi], dl
-    inc edi
-    dec ecx
-    jmp .pop_digits
-
-.null_terminate:
-    mov byte [edi], 0     ; Null-terminate string
-
-.done:
-    pop edi
-    pop esi
     pop ebx
     pop ebp
     ret
@@ -292,5 +236,23 @@ _read_str:
 .exit:
     pop edi
     pop ebx
+    pop ebp
+    ret
+
+; ------------------------------------------------------------------------------
+; atoi_conv(const char *str, int *out_val) -> parses integer via libc atoi
+; ------------------------------------------------------------------------------
+_atoi_conv:
+    push ebp
+    mov ebp, esp
+
+    push dword [ebp + 8]   ; str
+    call _atoi
+    add esp, 4             ; EAX has the parsed integer
+
+    mov ecx, [ebp + 12]    ; out_val pointer
+    mov [ecx], eax         ; Store result
+
+    xor eax, eax           ; Return 0 for success
     pop ebp
     ret

@@ -13,13 +13,13 @@ Implement floating-point string conversion subroutines in `src/io.asm`:
 Both should wrap stable libc calls (`atof`, `sprintf`) to guarantee robustness.
 
 ## ✅ Definition of Ready (DoR)
-* [ ] Libc linker imports defined for `atof` and `sprintf`.
-* [ ] FPU stack loading mechanics verified for float values.
+* [x] Libc linker imports defined for `atof` and `sprintf`.
+* [x] FPU stack loading mechanics verified for float values.
 
 ## 🏁 Definition of Done (DoD) & Acceptance Criteria
-* [ ] **[Testing]:** Conversion routines pass standard assertion checks in `tests/unit_tests.c`.
-* [ ] **[Robustness]:** Inputs with non-numeric formats or multiple decimals are rejected with error status codes.
-* [ ] **[Formatting]:** Floating-point values are correctly outputted to buffers with sign preservation.
+* [x] **[Testing]:** Conversion routines pass standard assertion checks in `tests/unit_tests.c`.
+* [x] **[Robustness]:** Inputs with non-numeric formats or multiple decimals are rejected with error status codes.
+* [x] **[Formatting]:** Floating-point values are correctly outputted to buffers with sign preservation.
 
 ---
 **Signature:** Kalyel N. Laurindo / Software Engineer

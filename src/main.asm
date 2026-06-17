@@ -1,9 +1,9 @@
 ; ==============================================================================
-;                      ASMCalc - Main CLI Application (x86 32-bit)
+;                      ASMCalc - Main CLI Application (x86 32-bit FPU)
 ; ==============================================================================
 ; Author: Kalyel N. Laurindo / Software Engineer
 ; Date: 2026-06-17
-; Description: Router and interactive user interface loop. Uses ANSI color escapes.
+; Description: Router and interactive user interface loop supporting doubles.
 ; ==============================================================================
 
 bits 32
@@ -52,20 +52,20 @@ section .data
 
     ; ANS Register State
     has_ans dd 0
-    ans_val dd 0
+    ans_val dq 0.0
 
 section .bss
     ; Input Buffers
     buf_option resb 16
     buf_operand resb 64
-    buf_output resb 32
-    val_a resd 1
-    val_b resd 1
+    buf_output resb 64
+    val_a resq 1
+    val_b resq 1
     val_opt resd 1
 
 section .text
 
-; External Math Engine Subroutines
+; External FPU Math Engine Subroutines
 extern _math_add
 extern _math_sub
 extern _math_imul
@@ -76,8 +76,9 @@ extern _math_pow
 ; External Input/Output Subroutines
 extern _print_str
 extern _read_str
+extern _atof_conv
+extern _ftoa_conv
 extern _atoi_conv
-extern _itoa_conv
 
 global _main
 
@@ -119,9 +120,10 @@ _main:
     add esp, 4
 
     push buf_output
+    push dword [ans_val + 4]
     push dword [ans_val]
-    call _itoa_conv
-    add esp, 8
+    call _ftoa_conv
+    add esp, 12
 
     push buf_output
     call _print_str
@@ -179,7 +181,7 @@ _main:
     cmp eax, -1
     je .exit_prog
 
-    ; Convert option to int
+    ; Convert option to int (option menu uses standard integer atoi)
     push val_opt
     push buf_option
     call _atoi_conv
@@ -217,7 +219,8 @@ _main:
 
 .clear_ans:
     mov dword [has_ans], 0
-    mov dword [ans_val], 0
+    fldz
+    fstp qword [ans_val]
     push CLR_SUCCESS
     call _print_str
     push msg_menu_line
@@ -280,14 +283,14 @@ _main:
     mov eax, [has_ans]
     test eax, eax
     jz .ans_empty_err
-    mov eax, [ans_val]
-    mov [val_a], eax
+    fld qword [ans_val]
+    fstp qword [val_a]
     jmp .prompt_operand_b
 
 .parse_a_normally:
     push val_a
     push buf_operand
-    call _atoi_conv
+    call _atof_conv
     add esp, 8
     test eax, eax
     jnz .operand_error
@@ -331,14 +334,14 @@ _main:
     mov eax, [has_ans]
     test eax, eax
     jz .ans_empty_err
-    mov eax, [ans_val]
-    mov [val_b], eax
+    fld qword [ans_val]
+    fstp qword [val_b]
     jmp .execute_calculation
 
 .parse_b_normally:
     push val_b
     push buf_operand
-    call _atoi_conv
+    call _atof_conv
     add esp, 8
     test eax, eax
     jnz .operand_error
@@ -364,70 +367,82 @@ _main:
     jmp .menu_loop ; Should not happen
 
 .do_add:
+    push dword [val_b + 4]
     push dword [val_b]
+    push dword [val_a + 4]
     push dword [val_a]
     call _math_add
-    add esp, 8
-    jmp .display_result
+    add esp, 16
+    jmp .store_and_display_result
 
 .do_sub:
+    push dword [val_b + 4]
     push dword [val_b]
+    push dword [val_a + 4]
     push dword [val_a]
     call _math_sub
-    add esp, 8
-    jmp .display_result
+    add esp, 16
+    jmp .store_and_display_result
 
 .do_imul:
+    push dword [val_b + 4]
     push dword [val_b]
+    push dword [val_a + 4]
     push dword [val_a]
     call _math_imul
-    add esp, 8
-    jmp .display_result
+    add esp, 16
+    jmp .store_and_display_result
 
 .do_idiv:
-    ; Division safety checks
-    mov ecx, [val_b]
-    cmp ecx, 0
-    je .div_zero_err
-
+    push dword [val_b + 4]
     push dword [val_b]
+    push dword [val_a + 4]
     push dword [val_a]
     call _math_idiv
-    add esp, 8
-    jmp .display_result
+    add esp, 16
+    jmp .store_and_display_result
 
 .do_mod:
-    ; Modulo division safety checks
-    mov ecx, [val_b]
-    cmp ecx, 0
-    je .div_zero_err
-
+    push dword [val_b + 4]
     push dword [val_b]
+    push dword [val_a + 4]
     push dword [val_a]
     call _math_mod
-    add esp, 8
-    jmp .display_result
+    add esp, 16
+    jmp .store_and_display_result
 
 .do_pow:
+    push dword [val_b + 4]
     push dword [val_b]
+    push dword [val_a + 4]
     push dword [val_a]
     call _math_pow
-    add esp, 8
-    jmp .display_result
+    add esp, 16
+    jmp .store_and_display_result
 
 ; ------------------------------------------------------------------------------
 ; Post-calculation and error handlers
 ; ------------------------------------------------------------------------------
-.display_result:
-    ; Save result to ANS
-    mov [ans_val], eax
+.store_and_display_result:
+    ; Result double is currently in FPU ST(0)
+    ; Save it to ans_val
+    fstp qword [ans_val]
+    
+    ; Perform unordered comparison check to verify if result is NaN (PF set)
+    fld qword [ans_val]
+    fld st0
+    fucomip st1
+    fstp st0
+    jp .nan_error           ; If parity flag is set, result is NaN (division by zero)
+
     mov dword [has_ans], 1
 
     ; Convert ans_val to output buffer
     push buf_output
-    push eax
-    call _itoa_conv
-    add esp, 8
+    push dword [ans_val + 4]
+    push dword [ans_val]
+    call _ftoa_conv
+    add esp, 12
 
     ; Print formatted output
     push CLR_SUCCESS
@@ -444,6 +459,18 @@ _main:
     
     jmp .menu_loop
 
+.nan_error:
+    ; Clear ANS active flag
+    mov dword [has_ans], 0
+    push CLR_ERROR
+    call _print_str
+    push msg_err_div_zero
+    call _print_str
+    push CLR_RESET
+    call _print_str
+    add esp, 12
+    jmp .menu_loop
+
 .ans_empty_err:
     push CLR_ERROR
     call _print_str
@@ -458,16 +485,6 @@ _main:
     push CLR_ERROR
     call _print_str
     push msg_err_num
-    call _print_str
-    push CLR_RESET
-    call _print_str
-    add esp, 12
-    jmp .menu_loop
-
-.div_zero_err:
-    push CLR_ERROR
-    call _print_str
-    push msg_err_div_zero
     call _print_str
     push CLR_RESET
     call _print_str

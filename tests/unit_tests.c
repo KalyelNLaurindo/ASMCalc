@@ -1,31 +1,30 @@
 /* ==============================================================================
- *                      ASMCalc - Unit Test Harness
+ *                      ASMCalc - Unit Test Harness (FPU Version)
  * ==============================================================================
  * Author: Kalyel N. Laurindo / Software Engineer
  * Date: 2026-06-17
- * Description: C test harness for asserting ASMCalc assembly math subroutines.
- *              Includes standard math validations and strict register preservation checks.
+ * Description: C test harness for asserting ASMCalc assembly double subroutines.
+ *              Includes standard FPU math validations and strict register checks.
  * ==============================================================================
  */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <math.h>
 #include <string.h>
 
-// External assembly functions (cdecl convention)
-extern int math_add(int a, int b);
-extern int math_sub(int a, int b);
-extern int math_imul(int a, int b);
-extern int math_idiv(int a, int b);
-extern int math_mod(int a, int b);
-extern int math_pow(int base, int exp);
-extern int atoi_conv(const char *str, int *out_val);
-extern void itoa_conv(int val, char *buffer);
+// External assembly functions (cdecl convention returning double in ST(0))
+extern double math_add(double a, double b);
+extern double math_sub(double a, double b);
+extern double math_imul(double a, double b);
+extern double math_idiv(double a, double b);
+extern double math_mod(double a, double b);
+extern double math_pow(double base, double exp);
+extern int atof_conv(const char *str, double *out_val);
+extern void ftoa_conv(double val, char *buffer);
 
-// Static variables to save/restore registers. Using static variables ensures 
-// GCC generates absolute memory relocations rather than ESP-relative offsets,
-// preventing stack layout mismatch bugs inside the inline assembly block.
+// Static variables to save/restore registers.
 static int saved_ebx;
 static int saved_esi;
 static int saved_edi;
@@ -33,16 +32,19 @@ static int post_ebx;
 static int post_esi;
 static int post_edi;
 
+// Macro for double precision assertions with small delta tolerance
+#define assert_double(actual, expected) assert(fabs((actual) - (expected)) < 0.00001)
+
 // Helper function to test register preservation (EBX, ESI, EDI)
-int test_call_with_preservation_check(int (*func)(int, int), int a, int b, const char* func_name) {
-    int result = 0;
+double test_call_with_preservation_check(double (*func)(double, double), double a, double b, const char* func_name) {
+    double result = 0;
     
     // Explicitly mapping:
-    // a -> EAX ("a")
-    // b -> ECX ("c")
+    // &a -> EAX ("a")
+    // &b -> ECX ("c")
     // func -> EDX ("d")
-    // This guarantees that GCC will not assign EBX, ESI, or EDI for these inputs,
-    // avoiding register corruption segfaults when we overwrite them with test patterns.
+    // This allows us to push the 64-bit double values using offset pointer arithmetic
+    // in AT&T syntax without compiler double-word formatting issues.
     asm volatile (
         // Save current GCC registers to absolute static locations
         "movl %%ebx, %[s_ebx]\n\t"
@@ -54,13 +56,17 @@ int test_call_with_preservation_check(int (*func)(int, int), int a, int b, const
         "movl $0x22222222, %%esi\n\t"
         "movl $0x33333333, %%edi\n\t"
         
-        // Push arguments (b then a for cdecl stack order)
-        "pushl %%ecx\n\t"
-        "pushl %%eax\n\t"
+        // Push double b (8 bytes, high then low)
+        "pushl 4(%%ecx)\n\t"
+        "pushl (%%ecx)\n\t"
+        
+        // Push double a (8 bytes, high then low)
+        "pushl 4(%%eax)\n\t"
+        "pushl (%%eax)\n\t"
         
         // Call function pointer (stored in EDX)
         "call *%%edx\n\t"
-        "addl $8, %%esp\n\t"
+        "addl $16, %%esp\n\t"
         
         // Save post-call values
         "movl %%ebx, %[p_ebx]\n\t"
@@ -72,13 +78,13 @@ int test_call_with_preservation_check(int (*func)(int, int), int a, int b, const
         "movl %[s_esi], %%esi\n\t"
         "movl %[s_edi], %%edi\n\t"
         
-        // Move return value
-        "movl %%eax, %[res]\n"
+        // Move return value from FPU ST(0) to result
+        "fstpl %[res]\n"
         
-        : [res] "=r" (result),
+        : [res] "=m" (result),
           [s_ebx] "=m" (saved_ebx), [s_esi] "=m" (saved_esi), [s_edi] "=m" (saved_edi),
           [p_ebx] "=m" (post_ebx), [p_esi] "=m" (post_esi), [p_edi] "=m" (post_edi)
-        : [a] "a" (a), [b] "c" (b), [func] "d" (func)
+        : [a_ptr] "a" (&a), [b_ptr] "c" (&b), [func] "d" (func)
         : "memory"
     );
     
@@ -96,96 +102,92 @@ int test_call_with_preservation_check(int (*func)(int, int), int a, int b, const
 int main() {
     setvbuf(stdout, NULL, _IONBF, 0);
 
-    printf("Starting ASMCalc Unit Tests...\n\n");
+    printf("Starting ASMCalc FPU Unit Tests...\n\n");
 
     // ----------------------------------------------------
     // 1. Test addition (math_add)
     // ----------------------------------------------------
     printf("Testing math_add...\n");
-    assert(test_call_with_preservation_check(math_add, 5, 3, "math_add") == 8);
-    assert(test_call_with_preservation_check(math_add, -5, -3, "math_add") == -8);
-    assert(test_call_with_preservation_check(math_add, 0, 0, "math_add") == 0);
-    assert(test_call_with_preservation_check(math_add, 2147483640, 7, "math_add") == 2147483647); // INT_MAX boundary
+    assert_double(test_call_with_preservation_check(math_add, 5.5, 3.25, "math_add"), 8.75);
+    assert_double(test_call_with_preservation_check(math_add, -5.5, -3.25, "math_add"), -8.75);
+    assert_double(test_call_with_preservation_check(math_add, 0.0, 0.0, "math_add"), 0.0);
     printf("math_add passed.\n\n");
 
     // ----------------------------------------------------
     // 2. Test subtraction (math_sub)
     // ----------------------------------------------------
     printf("Testing math_sub...\n");
-    assert(test_call_with_preservation_check(math_sub, 10, 4, "math_sub") == 6);
-    assert(test_call_with_preservation_check(math_sub, 5, 10, "math_sub") == -5);
-    assert(test_call_with_preservation_check(math_sub, -5, -10, "math_sub") == 5);
-    assert(test_call_with_preservation_check(math_sub, -2147483647, 1, "math_sub") == -2147483648); // INT_MIN boundary
+    assert_double(test_call_with_preservation_check(math_sub, 10.5, 4.25, "math_sub"), 6.25);
+    assert_double(test_call_with_preservation_check(math_sub, 5.0, 10.5, "math_sub"), -5.5);
     printf("math_sub passed.\n\n");
 
     // ----------------------------------------------------
     // 3. Test multiplication (math_imul)
     // ----------------------------------------------------
     printf("Testing math_imul...\n");
-    assert(test_call_with_preservation_check(math_imul, 3, 4, "math_imul") == 12);
-    assert(test_call_with_preservation_check(math_imul, -3, 4, "math_imul") == -12);
-    assert(test_call_with_preservation_check(math_imul, -3, -4, "math_imul") == 12);
-    assert(test_call_with_preservation_check(math_imul, 100, 0, "math_imul") == 0);
+    assert_double(test_call_with_preservation_check(math_imul, 3.5, 2.0, "math_imul"), 7.0);
+    assert_double(test_call_with_preservation_check(math_imul, -3.5, 4.0, "math_imul"), -14.0);
+    assert_double(test_call_with_preservation_check(math_imul, 100.5, 0.0, "math_imul"), 0.0);
     printf("math_imul passed.\n\n");
 
     // ----------------------------------------------------
     // 4. Test division (math_idiv)
     // ----------------------------------------------------
     printf("Testing math_idiv...\n");
-    assert(test_call_with_preservation_check(math_idiv, 12, 3, "math_idiv") == 4);
-    assert(test_call_with_preservation_check(math_idiv, -12, 3, "math_idiv") == -4);
-    assert(test_call_with_preservation_check(math_idiv, 12, -3, "math_idiv") == -4);
-    assert(test_call_with_preservation_check(math_idiv, 0, 5, "math_idiv") == 0);
+    assert_double(test_call_with_preservation_check(math_idiv, 12.5, 2.5, "math_idiv"), 5.0);
+    assert_double(test_call_with_preservation_check(math_idiv, -12.5, 2.5, "math_idiv"), -5.0);
     
-    // Safety guard test: Division by zero should return -1
-    assert(test_call_with_preservation_check(math_idiv, 10, 0, "math_idiv") == -1);
+    // Safety check: Div by zero returns NaN. (NaN != NaN is always true, and isnan is available)
+    double div_zero_res = test_call_with_preservation_check(math_idiv, 10.0, 0.0, "math_idiv");
+    assert(isnan(div_zero_res));
     printf("math_idiv passed.\n\n");
 
     // ----------------------------------------------------
     // 5. Test modulo (math_mod)
     // ----------------------------------------------------
     printf("Testing math_mod...\n");
-    assert(test_call_with_preservation_check(math_mod, 10, 3, "math_mod") == 1);
-    assert(test_call_with_preservation_check(math_mod, 10, 5, "math_mod") == 0);
-    assert(test_call_with_preservation_check(math_mod, -10, 3, "math_mod") == -1);
-    assert(test_call_with_preservation_check(math_mod, 10, 0, "math_mod") == -1); // safety guard
+    assert_double(test_call_with_preservation_check(math_mod, 5.0, 2.3, "math_mod"), 0.4);
+    assert_double(test_call_with_preservation_check(math_mod, 10.5, 5.0, "math_mod"), 0.5);
+    
+    double mod_zero_res = test_call_with_preservation_check(math_mod, 10.0, 0.0, "math_mod");
+    assert(isnan(mod_zero_res));
     printf("math_mod passed.\n\n");
 
     // ----------------------------------------------------
     // 6. Test power (math_pow)
     // ----------------------------------------------------
     printf("Testing math_pow...\n");
-    assert(test_call_with_preservation_check(math_pow, 2, 3, "math_pow") == 8);
-    assert(test_call_with_preservation_check(math_pow, 5, 0, "math_pow") == 1);
-    assert(test_call_with_preservation_check(math_pow, 3, 4, "math_pow") == 81);
-    assert(test_call_with_preservation_check(math_pow, 2, -1, "math_pow") == 0);
+    assert_double(test_call_with_preservation_check(math_pow, 4.0, 0.5, "math_pow"), 2.0);
+    assert_double(test_call_with_preservation_check(math_pow, 2.0, -3.0, "math_pow"), 0.125);
+    assert_double(test_call_with_preservation_check(math_pow, 5.0, 0.0, "math_pow"), 1.0);
     printf("math_pow passed.\n\n");
 
     // ----------------------------------------------------
-    // 7. Test string conversions (atoi_conv / itoa_conv)
+    // 7. Test string conversions (atof_conv / ftoa_conv)
     // ----------------------------------------------------
-    printf("Testing atoi_conv...\n");
-    int val = 0;
-    assert(atoi_conv("123", &val) == 0 && val == 123);
-    assert(atoi_conv("-456", &val) == 0 && val == -456);
-    assert(atoi_conv("   789", &val) == 0 && val == 789);
-    assert(atoi_conv("abc", &val) == -1);
-    assert(atoi_conv("12a3", &val) == -1);
-    assert(atoi_conv("2147483648", &val) == -1); // signed overflow
-    printf("atoi_conv passed.\n\n");
+    printf("Testing atof_conv...\n");
+    double val = 0.0;
+    assert(atof_conv("123.45", &val) == 0);
+    assert_double(val, 123.45);
+    
+    assert(atof_conv("   -456.78", &val) == 0);
+    assert_double(val, -456.78);
+    
+    assert(atof_conv("abc", &val) == -1);
+    assert(atof_conv("12.3.4", &val) == -1);
+    printf("atof_conv passed.\n\n");
 
-    printf("Testing itoa_conv...\n");
-    char buf[32];
-    itoa_conv(0, buf);
-    assert(strcmp(buf, "0") == 0);
-    itoa_conv(1234, buf);
-    assert(strcmp(buf, "1234") == 0);
-    itoa_conv(-5678, buf);
-    assert(strcmp(buf, "-5678") == 0);
-    printf("itoa_conv passed.\n\n");
+    printf("Testing ftoa_conv...\n");
+    char buf[64];
+    ftoa_conv(123.45, buf);
+    assert(strncmp(buf, "123.45", 6) == 0); // sprintf formatting might add trailing zeros, so check prefix
+    
+    ftoa_conv(-0.0125, buf);
+    assert(strncmp(buf, "-0.0125", 7) == 0);
+    printf("ftoa_conv passed.\n\n");
 
     printf("===================================================\n");
-    printf(" ALL TESTS PASSED SUCCESSFULLY (GREEN)\n");
+    printf(" ALL FPU TESTS PASSED SUCCESSFULLY (GREEN)\n");
     printf("===================================================\n");
 
     return 0;

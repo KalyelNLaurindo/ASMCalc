@@ -8,9 +8,9 @@
 
 * **Project Owner:** Kalyel N. Laurindo / Project Owner  
 * **Lead Tech Lead:** Kalyel N. Laurindo / Software Engineer  
-* **Current Sprint / Iteration:** Sprint 1  
+* **Current Sprint / Iteration:** Sprint 2  
 * **Target Delivery Date:** June 25, 2026
-* **Document Version:** v1.0
+* **Document Version:** v1.1
 
 ---
 
@@ -72,19 +72,19 @@
   * *Epic/Requirement Link:* RF01, RF03  
   * *Estimation/Priority:* High  
   * *TDD Test File:* `tests/unit_tests.c`  
-  * *Status:* To Do
+  * *Status:* Done
 
 * **[[TSK-08](TSK-08.md)]: Float Parsing and Formatting Routines (io.asm)**  
   * *Epic/Requirement Link:* RF02, RF04  
   * *Estimation/Priority:* High  
   * *TDD Test File:* `tests/unit_tests.c`  
-  * *Status:* To Do
+  * *Status:* Done
 
 * **[[TSK-09](TSK-09.md)]: CLI Menu & ANS Adaptation for Floats (main.asm)**  
   * *Epic/Requirement Link:* RF02  
   * *Estimation/Priority:* High  
   * *TDD Test File:* `tests/e2e_tests.bat`  
-  * *Status:* To Do
+  * *Status:* Done
 
 ---
 
@@ -92,9 +92,7 @@
 
 ### **🔴 To Do (Ready for Development)**
 
-* [ ] **[[TSK-07](TSK-07.md)]:** FPU Core Arithmetic Engine (math.asm)
-* [ ] **[[TSK-08](TSK-08.md)]:** Float Parsing and Formatting Routines (io.asm)
-* [ ] **[[TSK-09](TSK-09.md)]:** CLI Menu & ANS Adaptation for Floats (main.asm)
+* [ ] None
 
 ### **🟡 In Progress (Actively Being Built)**
 
@@ -112,6 +110,9 @@
 * [x] **[[TSK-04](TSK-04.md)]:** Low-Level CLI Input/Output Handlers (io.asm)
 * [x] **[[TSK-05](TSK-05.md)]:** Main Console Router Menu Loop (main.asm)
 * [x] **[[TSK-06](TSK-06.md)]:** Expanded Math Operations & ANSI Color Terminal Interface (Scope Expansion)
+* [x] **[[TSK-07](TSK-07.md)]:** FPU Core Arithmetic Engine (math.asm)
+* [x] **[[TSK-08](TSK-08.md)]:** Float Parsing and Formatting Routines (io.asm)
+* [x] **[[TSK-09](TSK-09.md)]:** CLI Menu & ANS Adaptation for Floats (main.asm)
 
 ---
 

@@ -1,10 +1,10 @@
 ; ==============================================================================
-;                      ASMCalc - Mathematics Engine (x86 32-bit)
+;                      ASMCalc - Mathematics Engine (x86 32-bit FPU)
 ; ==============================================================================
 ; Author: Kalyel N. Laurindo / Software Engineer
 ; Date: 2026-06-17
-; Description: Signed 32-bit integer arithmetic routines implementing cdecl calling 
-;              convention. High-risk routines contain safety guards against division exceptions.
+; Description: 64-bit Double Precision (REAL8) math subroutines utilizing 
+;              the x87 FPU coprocessor stack and transcendental instructions.
 ; ==============================================================================
 
 bits 32
@@ -20,170 +20,140 @@ global _math_mod
 global _math_pow
 
 ; ------------------------------------------------------------------------------
-; math_add(int a, int b) -> returns (a + b) in EAX
+; math_add(double a, double b) -> returns (a + b) in ST(0)
 ; ------------------------------------------------------------------------------
 _math_add:
-    ; Establish stack frame
     push ebp
     mov ebp, esp
 
-    ; Load operands
-    mov eax, [ebp + 8]   ; Parameter a (offset +8 from stack base)
-    add eax, [ebp + 12]  ; Parameter b (offset +12 from stack base)
+    fld qword [ebp + 8]     ; Load double a (offset +8 from stack base)
+    fadd qword [ebp + 16]   ; Add double b (offset +16 from stack base)
 
-    ; Restore stack frame and exit
     pop ebp
     ret
 
 ; ------------------------------------------------------------------------------
-; math_sub(int a, int b) -> returns (a - b) in EAX
+; math_sub(double a, double b) -> returns (a - b) in ST(0)
 ; ------------------------------------------------------------------------------
 _math_sub:
-    ; Establish stack frame
     push ebp
     mov ebp, esp
 
-    ; Load operands
-    mov eax, [ebp + 8]   ; Parameter a
-    sub eax, [ebp + 12]  ; Parameter b (subtract b from a)
+    fld qword [ebp + 8]     ; Load double a
+    fsub qword [ebp + 16]   ; Subtract double b
 
-    ; Restore stack frame and exit
     pop ebp
     ret
 
 ; ------------------------------------------------------------------------------
-; math_imul(int a, int b) -> returns (a * b) in EAX
+; math_imul(double a, double b) -> returns (a * b) in ST(0)
 ; ------------------------------------------------------------------------------
 _math_imul:
-    ; Establish stack frame
     push ebp
     mov ebp, esp
 
-    ; Load operands
-    mov eax, [ebp + 8]   ; Parameter a
-    imul eax, [ebp + 12] ; Signed multiply EAX by b. Result fits in EAX.
+    fld qword [ebp + 8]     ; Load double a
+    fmul qword [ebp + 16]   ; Multiply by double b
 
-    ; Restore stack frame and exit
     pop ebp
     ret
 
 ; ------------------------------------------------------------------------------
-; math_idiv(int a, int b) -> returns (a / b) in EAX (or -1 on division by zero)
+; math_idiv(double a, double b) -> returns (a / b) in ST(0) (or NaN on div-by-zero)
 ; ------------------------------------------------------------------------------
 _math_idiv:
-    ; Establish stack frame
     push ebp
     mov ebp, esp
 
-    ; Preserve EBX register since it is non-volatile in cdecl
-    push ebx
+    fld qword [ebp + 16]    ; Load double b (divisor)
+    fldz                    ; Load 0.0
+    fucomip st1             ; Compare 0.0 with b and pop 0.0
+    fstp st0                ; Pop b
+    je .div_zero
 
-    ; Load operands
-    mov eax, [ebp + 8]   ; Parameter a (dividend)
-    mov ebx, [ebp + 12]  ; Parameter b (divisor)
-
-    ; Safety guard: Check for division by zero
-    cmp ebx, 0
-    je .err_div_zero
-
-    ; Prepare EDX:EAX for division
-    cdq                  ; Sign-extends EAX into EDX (handles negative dividends)
-    idiv ebx             ; Divide EDX:EAX by EBX. EAX = quotient, EDX = remainder.
+    fld qword [ebp + 8]     ; Load double a
+    fdiv qword [ebp + 16]   ; Divide by double b
     jmp .done
 
-.err_div_zero:
-    ; Divisor was zero, return error sentinel (-1)
-    mov eax, -1
+.div_zero:
+    fldz
+    fldz
+    fdivp st1, st0          ; 0.0 / 0.0 = NaN
 
 .done:
-    ; Restore non-volatile EBX
-    pop ebx
-
-    ; Restore stack frame and exit
     pop ebp
     ret
 
 ; ------------------------------------------------------------------------------
-; math_mod(int a, int b) -> returns (a % b) in EAX (or -1 on division by zero)
+; math_mod(double a, double b) -> returns (a % b) in ST(0) via fprem
 ; ------------------------------------------------------------------------------
 _math_mod:
-    ; Establish stack frame
     push ebp
     mov ebp, esp
 
-    ; Preserve EBX register
-    push ebx
+    fld qword [ebp + 16]    ; Load double b
+    fldz                    ; Load 0.0
+    fucomip st1             ; Compare 0.0 with b and pop 0.0
+    fstp st0                ; Pop b
+    je .div_zero
 
-    ; Load operands
-    mov eax, [ebp + 8]   ; Parameter a (dividend)
-    mov ebx, [ebp + 12]  ; Parameter b (divisor)
+    ; Load operands in correct order for partial remainder
+    fld qword [ebp + 16]    ; ST(1) = b
+    fld qword [ebp + 8]     ; ST(0) = a
+    
+.rem_loop:
+    fprem                   ; ST(0) = ST(0) % ST(1)
+    fstsw ax                ; Store status word in AX
+    sahf                    ; Store AH into flags
+    jp .rem_loop            ; If C2 is set, reduction is incomplete, loop again
 
-    ; Safety guard: Check for division by zero
-    cmp ebx, 0
-    je .err_div_zero
-
-    ; Prepare EDX:EAX for division
-    cdq                  ; Sign-extends EAX into EDX
-    idiv ebx             ; Divide EDX:EAX by EBX. EAX = quotient, EDX = remainder.
-    mov eax, edx         ; Move remainder (EDX) to return register (EAX)
+    fstp st1                ; Pop ST(1) (b), leaving remainder in ST(0)
     jmp .done
 
-.err_div_zero:
-    ; Divisor was zero, return error sentinel (-1)
-    mov eax, -1
+.div_zero:
+    fldz
+    fldz
+    fdivp st1, st0          ; Return NaN
 
 .done:
-    ; Restore non-volatile EBX
-    pop ebx
-
-    ; Restore stack frame and exit
     pop ebp
     ret
 
 ; ------------------------------------------------------------------------------
-; math_pow(int base, int exp) -> returns (base ^ exp) in EAX
+; math_pow(double base, double exp) -> returns (base ^ exp) in ST(0) via fyl2x + f2xm1
 ; ------------------------------------------------------------------------------
 _math_pow:
-    ; Establish stack frame
     push ebp
     mov ebp, esp
 
-    ; Preserve EBX and ECX
-    push ebx
-    push ecx
+    fld qword [ebp + 16]    ; Load exp (y) -> ST(1)
+    fld qword [ebp + 8]     ; Load base (x) -> ST(0)
 
-    ; Load operands
-    mov eax, [ebp + 8]   ; base
-    mov ecx, [ebp + 12]  ; exp
+    ; Check if base is 0.0
+    fldz
+    fucomip st1             ; Compare 0.0 with base
+    je .base_zero
 
-    ; Check if exp < 0
-    cmp ecx, 0
-    jl .neg_exp
+    fyl2x                   ; ST(0) = y * log2(x), pops base
 
-    ; Check if exp == 0
-    je .zero_exp
-
-    ; If exp > 0, set up power loop
-    mov ebx, eax         ; ebx = base
-    mov eax, 1           ; result = 1
-
-.loop:
-    test ecx, ecx
-    jz .done
-    imul eax, ebx        ; result *= base
-    dec ecx
-    jmp .loop
-
-.zero_exp:
-    mov eax, 1           ; base^0 = 1
+    ; Split ST(0) (z) into integer part (I) and fractional part (F)
+    fld st0                 ; ST(0) = z, ST(1) = z
+    frndint                 ; ST(0) = I (rounded to nearest integer)
+    fsub st1, st0           ; ST(1) = z - I = F. ST(0) = I, ST(1) = F
+    fxch st1                ; ST(0) = F, ST(1) = I
+    f2xm1                   ; ST(0) = 2^F - 1
+    fld1                    ; ST(0) = 1, ST(1) = 2^F - 1
+    faddp st1, st0          ; ST(0) = 2^F, ST(1) = I
+    fscale                  ; ST(0) = 2^F * 2^I = 2^z, ST(1) = I
+    fstp st1                ; Pop I, leaving result in ST(0)
     jmp .done
 
-.neg_exp:
-    mov eax, 0           ; Integer division limits negative power to 0
+.base_zero:
+    ; Base is zero. Clean FPU and return 0.0
+    fstp st0                ; Pop base
+    fstp st0                ; Pop exp
+    fldz                    ; Return 0.0
 
 .done:
-    ; Restore registers
-    pop ecx
-    pop ebx
     pop ebp
     ret
