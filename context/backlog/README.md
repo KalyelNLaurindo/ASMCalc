@@ -52,9 +52,35 @@
   * *Epic/Requirement Link:* RF02, RF04  
   * *Estimation/Priority:* Medium  
   * *TDD Test File:* `tests/unit_tests.c`  
-  * *Status:* To Do
+  * *Status:* Done
 
 * **[[TSK-05](TSK-05.md)]: Main Console Router Menu Loop (main.asm)**  
+  * *Epic/Requirement Link:* RF02  
+  * *Estimation/Priority:* High  
+  * *TDD Test File:* `tests/e2e_tests.bat`  
+  * *Status:* Done
+
+* **[[TSK-06](TSK-06.md)]: Expanded Math Operations & ANSI Color Terminal Interface**  
+  * *Epic/Requirement Link:* RF01, RF02, RF04  
+  * *Estimation/Priority:* High  
+  * *TDD Test File:* `tests/unit_tests.c`  
+  * *Status:* Done
+
+### **📦 Backlog Phase 5: Floating Point (FPU) Support**
+
+* **[[TSK-07](TSK-07.md)]: FPU Core Arithmetic Engine (math.asm)**  
+  * *Epic/Requirement Link:* RF01, RF03  
+  * *Estimation/Priority:* High  
+  * *TDD Test File:* `tests/unit_tests.c`  
+  * *Status:* To Do
+
+* **[[TSK-08](TSK-08.md)]: Float Parsing and Formatting Routines (io.asm)**  
+  * *Epic/Requirement Link:* RF02, RF04  
+  * *Estimation/Priority:* High  
+  * *TDD Test File:* `tests/unit_tests.c`  
+  * *Status:* To Do
+
+* **[[TSK-09](TSK-09.md)]: CLI Menu & ANS Adaptation for Floats (main.asm)**  
   * *Epic/Requirement Link:* RF02  
   * *Estimation/Priority:* High  
   * *TDD Test File:* `tests/e2e_tests.bat`  
@@ -66,8 +92,9 @@
 
 ### **🔴 To Do (Ready for Development)**
 
-* [ ] **[[TSK-04](TSK-04.md)]:** Low-Level CLI Input/Output Handlers (io.asm)
-* [ ] **[[TSK-05](TSK-05.md)]:** Main Console Router Menu Loop (main.asm)
+* [ ] **[[TSK-07](TSK-07.md)]:** FPU Core Arithmetic Engine (math.asm)
+* [ ] **[[TSK-08](TSK-08.md)]:** Float Parsing and Formatting Routines (io.asm)
+* [ ] **[[TSK-09](TSK-09.md)]:** CLI Menu & ANS Adaptation for Floats (main.asm)
 
 ### **🟡 In Progress (Actively Being Built)**
 
@@ -82,6 +109,9 @@
 * [x] **[[TSK-01](TSK-01.md)]:** Toolchain Verification & Makefile Bootstrap (Folder structure initialized)
 * [x] **[[TSK-02](TSK-02.md)]:** Core Arithmetic Procedures (math.asm)
 * [x] **[[TSK-03](TSK-03.md)]:** C Test Harness for Math Routines
+* [x] **[[TSK-04](TSK-04.md)]:** Low-Level CLI Input/Output Handlers (io.asm)
+* [x] **[[TSK-05](TSK-05.md)]:** Main Console Router Menu Loop (main.asm)
+* [x] **[[TSK-06](TSK-06.md)]:** Expanded Math Operations & ANSI Color Terminal Interface (Scope Expansion)
 
 ---
 

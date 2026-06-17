@@ -10,10 +10,10 @@
 Implement string-to-integer (`atoi_conv`) and integer-to-string (`itoa_conv`) subroutines in `src/io.asm`, as well as standard stream printing and buffer-safe reading wrappers linking against standard libc elements.
 
 ## ✅ Definition of Ready (DoR)
-* [ ] Math procedures finalized or mocked.
-* [ ] GCC linking configurations verified for standard library integration.
+* [x] Math procedures finalized or mocked.
+* [x] GCC linking configurations verified for standard library integration.
 
 ## 🏁 Definition of Done (DoD) & Acceptance Criteria
-* [ ] **[Testing]:** Conversion routines pass standard assertion checks in `tests/unit_tests.c`.
-* [ ] **[Functional]:** String number formats are parsed to native binary values and correctly formatted back.
-* [ ] **[Technical]:** Character inputs that are not decimal digits are intercepted, returning error status codes without parsing corrupt data.
+* [x] **[Testing]:** Conversion routines pass standard assertion checks in `tests/unit_tests.c`.
+* [x] **[Functional]:** String number formats are parsed to native binary values and correctly formatted back.
+* [x] **[Technical]:** Character inputs that are not decimal digits are intercepted, returning error status codes without parsing corrupt data.

@@ -10,9 +10,9 @@
 Build the central routing flow inside `src/main.asm` defining `_main`. Render calculations options, route commands to arithmetic modules, and manage clean program exits.
 
 ## ✅ Definition of Ready (DoR)
-* [ ] `src/math.asm` and `src/io.asm` ready and compiled to object binaries.
+* [x] `src/math.asm` and `src/io.asm` ready and compiled to object binaries.
 
 ## 🏁 Definition of Done (DoD) & Acceptance Criteria
-* [ ] **[Functional]:** Launching `ASMCalc.exe` presents active menu routing allowing selection of addition, subtraction, multiplication, and division.
-* [ ] **[UX/CLI]:** Menu runs recursively until user selects option `5` (Exit).
-* [ ] **[Resilience]:** Program does not crash under invalid operation selections.
+* [x] **[Functional]:** Launching `ASMCalc.exe` presents active menu routing allowing selection of addition, subtraction, multiplication, and division.
+* [x] **[UX/CLI]:** Menu runs recursively until user selects exit option.
+* [x] **[Resilience]:** Program does not crash under invalid operation selections.

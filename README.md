@@ -14,79 +14,110 @@
 | Property               | Description                                                                              |
 | :--------------------- | :--------------------------------------------------------------------------------------- |
 | **Role**               | Portfolio Legacy System / Architectural Reference                                        |
-| **Target Segment**     | Students / Junior Engineers onboarding in Legacy Systems                                 |
+| **Target Audience**    | Software Engineers / Recruiters / Systems Engineering Specialists                       |
 | **Architecture Style** | Modular Assembly Subroutines obeying standard **cdecl** calling conventions              |
 | **Execution Engine**   | Standalone 32-bit Win32 Console Binary executing native assembly arithmetic opcodes      |
+| **Build System**       | GNU Make & MinGW GCC (Dynamic linking to `msvcrt.dll` for stable I/O)                    |
 | **Date of Creation**   | June 16, 2026                                                                            |
-| **Current Version**    | v1.0.0                                                                                   |
+| **Current Version**    | v1.1.0 (Sprint 1 Completed)                                                              |
 
 ---
 
-## **🚀 1. The Product Vision & Core Problem**
+## **🚀 1. The Product Vision & Engineering Focus**
 
 ### **1.1. The Macro Pain Space**
-Modern developer onboarding processes assume a high level of abstraction, shielding engineers from physical register states and stack operations. When developers are introduced to legacy corporate modules containing embedded assembly math calculations, they lack clean, isolated, and well-documented reference implementations. They often resort to disassembling complex C scripts, which generates highly convoluted outputs, leading to high bug rates and onboarding friction.
+Modern software development operates under layers of heavy compiler abstractions, hiding register management, stack frames, and CPU flags from engineers. When developers encounter low-level legacy modules, they often struggle to comprehend calling conventions, manual register preservation, and CPU exception avoidance. 
 
-### **1.2. The Core Solution Paradigm Shift**
-ASMCalc provides a clean, hand-written, line-by-line documented x86 Assembly CLI calculator. It isolates basic addition, subtraction, multiplication, and division into decoupled subroutines, demonstrating stack framework parameters and calling convention standards without high-level compiler overhead.
-
----
-
-## **🎮 2. CLI / Interface Usage Reference**
-
-The client interface is a simple interactive console loop.
-
-| Command / Action              | Syntax                | Description                                                        | Example              |
-| :---------------------------- | :-------------------- | :----------------------------------------------------------------- | :------------------- |
-| **Run Calculator**            | `ASMCalc.exe`         | Launches the CLI calculator menu and console handler               | `ASMCalc.exe`        |
-| **Arithmetic Selection**      | Input `1` to `4`      | Directs execution to Sum, Subtraction, Multiplication, or Division | Menu prompt entry    |
-| **Operand Input**             | Positive/Negative Dec | Reads decimal numbers to perform operations                        | Input: `15`, `-3`     |
-
-> [!NOTE]
-> **Data & Validation Rules:**
-> - User input strings are read using size-restricted buffers to prevent buffer overflow attacks.
-> - Division operations execute zero-value divisor checks prior to the hardware calculation, avoiding processor exceptions (division-by-zero crashes).
+### **1.2. The Solution: ASMCalc**
+**ASMCalc** is a highly documented, modular, and optimized CLI calculator written entirely in 32-bit x86 Intel Assembly (Protected Mode). It serves as a premium reference for:
+- Establishing proper stack frames (`EBP`, `ESP` isolation).
+- Enforcing standard C Calling Conventions (`cdecl`) for seamless integration with C/C++ libraries.
+- Standardizing register preservation rules (saving non-volatile `EBX`, `ESI`, and `EDI`).
+- Preventing hardware exceptions (software checks for division-by-zero on `IDIV` and modulo operations).
+- Enhancing console UX with native ANSI color escape sequences and an in-memory results register (`ANS`).
 
 ---
 
-## **🛠️ 3. Technical Stack Overview**
+## **🎮 2. CLI Features & Interface Usage**
+
+The interface is an interactive console loop styled with ANSI colors (Bold Cyan for headers, Green for results, Red for errors, Yellow for menus).
+
+```text
+===============================================
+                 ASMCalc CLI Calculator
+===============================================
+  Active ANS Register: 8
+-----------------------------------------------
+  1. Add (+)
+  2. Subtract (-)
+  3. Multiply (*)
+  4. Divide (/)
+  5. Modulo (%)
+  6. Power (^)
+  7. Clear ANS Register
+  8. Exit Program
+-----------------------------------------------
+  Choose Option (1-8):
+```
+
+### **Core CLI Interactions**
+- **ANS Register**: Reuses the result of the last successful calculation as the first operand by entering `ans` (case-insensitive) in the input prompts.
+- **Arithmetic Expansion**: Includes modulo (`math_mod`) and power (`math_pow`) operations, complete with hardware boundary protections.
+- **Input Hardening**: Digits are read using size-restricted buffer controls. Character inputs that are not decimal digits are intercepted, returning error status codes without parsing corrupt data.
+
+---
+
+## **🛠️ 3. Technical Stack & Architecture**
 
 | Architectural Layer        | Component / Technology                        | Technical Rationale                                                                       |
 | :------------------------- | :-------------------------------------------- | :---------------------------------------------------------------------------------------- |
-| **User Interface**         | Win32 Console Streams                         | Direct standard input/output interface with zero UI rendering overhead.                    |
-| **Calculation Logic**      | Intel x86 32-bit Assembly (NASM)              | Complete control over CPU registers and mathematical instruction sets.                   |
-| **System Abstraction**     | Microsoft Visual C Runtime (`msvcrt.dll`)     | Leverage standard C lib operations (`printf`, `scanf`) for console I/O helper operations.  |
-| **Build System**           | GNU Make (Makefile) & MinGW GCC (32-bit)      | Streamlined assembly compilation and linking workflow on Windows environment.             |
+| **User Interface**         | Win32 Console / ANSI Escapes                  | Color-coded CLI with zero rendering overhead, compatible with modern terminal emulators.  |
+| **Calculation Logic**      | Intel x86 32-bit Assembly (NASM)              | Hand-written Intel-syntax assembly code focusing on CPU register control and instruction-level speed.|
+| **System Abstraction**     | Microsoft Visual C Runtime (`msvcrt.dll`)     | Dynamic linking to libc helper functions (`printf`, `getchar`, `fflush`) to avoid platform-specific system calls. |
+| **Test Engine**            | TDD C Harness (`tests/unit_tests.c`)          | Verifies assembly symbols, tests signed boundaries, and asserts register preservation.    |
 
 ---
 
-## **🏗️ 4. Core Architectural Premises**
+## **🏗️ 4. Core Architectural Premises & Guidelines**
 
 *   **Premise 4.1 - Design & Modularity Strategy:** Monolith structured into separated files for I/O functions (`io.asm`) and math calculations (`math.asm`) bound together via calling convention interfaces.
-*   **Premise 4.2 - Testing Strategy & Coverage Rule:** Test-Driven Development (TDD) via C unit tests (`tests/unit_tests.c`) calling assembly object routines directly.
-*   **Premise 4.3 - Data Deletion & Auditing Policy:** N/A (Temporary registers are reset on menu loop iterations).
-*   **Premise 4.4 - API Idempotency & Concurrency Strategy:** N/A (Single-threaded CLI application).
+*   **Premise 4.2 - Stack Frame Integrity:** Every subroutine that modifies stack pointer or uses local buffers must establish a proper stack frame:
+    ```assembly
+    push ebp
+    mov ebp, esp
+    ; ... body ...
+    mov esp, ebp
+    pop ebp
+    ret
+    ```
+*   **Premise 4.3 - Testing Strategy & Coverage Rule:** Test-Driven Development (TDD) via C unit tests (`tests/unit_tests.c`) calling assembly object routines directly.
+*   **Premise 4.4 - Deferred Stack Cleanup:** Functions invoked repeatedly in the menu render block utilize deferred stack cleanups (e.g. cleaning multiple pushes in a single `add esp, N` instruction) to optimize execution size.
 
 ---
 
-## **📂 5. Codebase Structure & Directory Standards**
+## **📂 5. Codebase Structure**
 
 ```
 ASMCalc/
 ├── context/                   # Architecture & Discovery specs
-│   ├── backlog/
-│   │   └── 4 - Task Management - ASMCalc.md
-│   ├── 0 - Problem Discovery - ASMCalc.md
-│   ├── 1 - Solution Architecture - ASMCalc.md
-│   ├── 2 - Software Design - ASMCalc.md
-│   ├── 3 - Implementation Flow - ASMCalc.md
-│   ├── CLAUDE - ASMCalc.md
+│   ├── backlog/               # Prioritized agile tasks (TSK-01 to TSK-06)
+│   │   ├── README.md          # Agile Backlog & Kanban board status
+│   │   ├── TSK-01.md          # Toolchain Verification
+│   │   ├── TSK-02.md          # Core Arithmetic Procedures
+│   │   ├── TSK-03.md          # C Test Harness Setup
+│   │   ├── TSK-04.md          # Low-Level CLI Input/Output Handlers
+│   │   ├── TSK-05.md          # Main Console Router Menu Loop
+│   │   └── TSK-06.md          # Expanded Math Operations & ANSI Color Interface
+│   ├── Problem Discovery - ASMCalc.md
+│   ├── Solution Architecture - ASMCalc.md
+│   ├── Software Design - ASMCalc.md
+│   ├── Implementation Flow - ASMCalc.md
 │   └── Quick Start - ASMCalc.md
 │
 ├── src/                       # Assembly source codes
 │   ├── main.asm               # Entry point & Menu loop
-│   ├── math.asm               # Arithmetic routines
-│   └── io.asm                 # Standard stream & ASCII parsing routines
+│   ├── math.asm               # Arithmetic routines (Sum, Sub, Mul, Div, Mod, Pow)
+│   └── io.asm                 # Standard stream & ASCII parsing routines (atoi, itoa, print, read)
 │
 ├── tests/                     # Test harness suite
 │   └── unit_tests.c           # C Unit Testing harness
@@ -103,31 +134,43 @@ ASMCalc/
 ### **6.1. Core System Prerequisites**
 - **NASM Assembler** (added to System PATH)
 - **MinGW GCC Compiler** with 32-bit compilation support (`gcc -m32`)
-- **GNU Make**
+- **GNU Make** (e.g., `mingw32-make` or `make`)
 
-### **6.2. Initial Bootstrap Sequence**
+*Note: MSYS2's MinGW 32-bit toolchain (`mingw-w64-i686-gcc`) is recommended on Windows.*
 
-1. Compile the calculator locally using Makefile:
-   ```bash
-   make build
+### **6.2. Environment Verification & Compilation**
+
+1. Configure environment path for GCC and NASM:
+   ```powershell
+   $env:PATH = "C:\tools\msys64\mingw32\bin;C:\Program Files\NASM;" + $env:PATH
    ```
 
-2. Run the executable:
-   ```bash
-   ASMCalc.exe
+2. Verify compiler toolchains are accessible:
+   ```powershell
+   mingw32-make check-env
    ```
 
-### **6.3. Automated Verification Commands**
+3. Build the interactive CLI application:
+   ```powershell
+   mingw32-make build
+   ```
 
-- **Execute primary system test engine (C Unit Tests)**:
-  ```bash
-  make test
-  ```
+4. Run the executable:
+   ```powershell
+   .\ASMCalc.exe
+   ```
 
-- **Clean temporary build object files**:
-  ```bash
-  make clean
-  ```
+### **6.3. Running Automated Tests**
+
+Run C-based unit assertions targeting compiled assembly object files. This includes validating signed arithmetic edge cases, integer overflow, conversion formatting, and strict register preservation checks:
+```powershell
+mingw32-make test
+```
+
+Clean build artifacts:
+```powershell
+mingw32-make clean
+```
 
 ---
 

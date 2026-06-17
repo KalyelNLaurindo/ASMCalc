@@ -11,12 +11,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <string.h>
 
 // External assembly functions (cdecl convention)
 extern int math_add(int a, int b);
 extern int math_sub(int a, int b);
 extern int math_imul(int a, int b);
 extern int math_idiv(int a, int b);
+extern int math_mod(int a, int b);
+extern int math_pow(int base, int exp);
+extern int atoi_conv(const char *str, int *out_val);
+extern void itoa_conv(int val, char *buffer);
 
 // Static variables to save/restore registers. Using static variables ensures 
 // GCC generates absolute memory relocations rather than ESP-relative offsets,
@@ -135,6 +140,49 @@ int main() {
     // Safety guard test: Division by zero should return -1
     assert(test_call_with_preservation_check(math_idiv, 10, 0, "math_idiv") == -1);
     printf("math_idiv passed.\n\n");
+
+    // ----------------------------------------------------
+    // 5. Test modulo (math_mod)
+    // ----------------------------------------------------
+    printf("Testing math_mod...\n");
+    assert(test_call_with_preservation_check(math_mod, 10, 3, "math_mod") == 1);
+    assert(test_call_with_preservation_check(math_mod, 10, 5, "math_mod") == 0);
+    assert(test_call_with_preservation_check(math_mod, -10, 3, "math_mod") == -1);
+    assert(test_call_with_preservation_check(math_mod, 10, 0, "math_mod") == -1); // safety guard
+    printf("math_mod passed.\n\n");
+
+    // ----------------------------------------------------
+    // 6. Test power (math_pow)
+    // ----------------------------------------------------
+    printf("Testing math_pow...\n");
+    assert(test_call_with_preservation_check(math_pow, 2, 3, "math_pow") == 8);
+    assert(test_call_with_preservation_check(math_pow, 5, 0, "math_pow") == 1);
+    assert(test_call_with_preservation_check(math_pow, 3, 4, "math_pow") == 81);
+    assert(test_call_with_preservation_check(math_pow, 2, -1, "math_pow") == 0);
+    printf("math_pow passed.\n\n");
+
+    // ----------------------------------------------------
+    // 7. Test string conversions (atoi_conv / itoa_conv)
+    // ----------------------------------------------------
+    printf("Testing atoi_conv...\n");
+    int val = 0;
+    assert(atoi_conv("123", &val) == 0 && val == 123);
+    assert(atoi_conv("-456", &val) == 0 && val == -456);
+    assert(atoi_conv("   789", &val) == 0 && val == 789);
+    assert(atoi_conv("abc", &val) == -1);
+    assert(atoi_conv("12a3", &val) == -1);
+    assert(atoi_conv("2147483648", &val) == -1); // signed overflow
+    printf("atoi_conv passed.\n\n");
+
+    printf("Testing itoa_conv...\n");
+    char buf[32];
+    itoa_conv(0, buf);
+    assert(strcmp(buf, "0") == 0);
+    itoa_conv(1234, buf);
+    assert(strcmp(buf, "1234") == 0);
+    itoa_conv(-5678, buf);
+    assert(strcmp(buf, "-5678") == 0);
+    printf("itoa_conv passed.\n\n");
 
     printf("===================================================\n");
     printf(" ALL TESTS PASSED SUCCESSFULLY (GREEN)\n");
