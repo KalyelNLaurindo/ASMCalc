@@ -86,13 +86,28 @@
   * *TDD Test File:* `tests/e2e_tests.bat`  
   * *Status:* Done
 
+### **📦 Backlog Phase 6: Core Validation & Extended Sets**
+
+* **[[TSK-10](TSK-10.md)]: Extended Negative Number Support & Boundary Validation**  
+  * *Epic/Requirement Link:* RF01, RF02  
+  * *Estimation/Priority:* Medium  
+  * *TDD Test File:* `tests/unit_tests.c`  
+  * *Status:* To Do
+
+* **[[TSK-11](TSK-11.md)]: Support for Complex Numbers and Alternative Representation Sets**  
+  * *Epic/Requirement Link:* RF01, RF05  
+  * *Estimation/Priority:* Low  
+  * *TDD Test File:* `tests/unit_tests.c`  
+  * *Status:* To Do
+
 ---
 
 ## **3. 📋 Basic Markdown Kanban Board**
 
 ### **🔴 To Do (Ready for Development)**
 
-* [ ] None
+* [ ] **[[TSK-10](TSK-10.md)]:** Extended Negative Number Support & Boundary Validation
+* [ ] **[[TSK-11](TSK-11.md)]:** Support for Complex Numbers and Alternative Representation Sets
 
 ### **🟡 In Progress (Actively Being Built)**
 

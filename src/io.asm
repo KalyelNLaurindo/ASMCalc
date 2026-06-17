@@ -11,7 +11,7 @@ bits 32
 
 section .data
     fmt_str   db "%s", 0
-    fmt_float db "%f", 0
+    fmt_float db "%.2f", 0
 
 section .text
 

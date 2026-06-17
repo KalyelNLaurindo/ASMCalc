@@ -100,7 +100,7 @@ The interface is an interactive console loop styled with ANSI colors (Bold Cyan 
 ```
 ASMCalc/
 ├── context/                   # Architecture & Discovery specs
-│   ├── backlog/               # Prioritized agile tasks (TSK-01 to TSK-09)
+│   ├── backlog/               # Prioritized agile tasks (TSK-01 to TSK-11)
 │   │   ├── README.md          # Agile Backlog & Kanban board status
 │   │   ├── TSK-01.md          # Toolchain Verification
 │   │   ├── TSK-02.md          # Core Arithmetic Procedures
@@ -110,7 +110,9 @@ ASMCalc/
 │   │   ├── TSK-06.md          # Expanded Math Operations & ANSI Color Interface
 │   │   ├── TSK-07.md          # FPU Core Arithmetic Engine
 │   │   ├── TSK-08.md          # Float Parsing and Formatting Routines
-│   │   └── TSK-09.md          # CLI Menu & ANS Adaptation for Floats
+│   │   ├── TSK-09.md          # CLI Menu & ANS Adaptation for Floats
+│   │   ├── TSK-10.md          # Extended Negative Number Support & Boundary Validation
+│   │   └── TSK-11.md          # Support for Complex Numbers and Alternative Representation Sets
 │   ├── Problem Discovery - ASMCalc.md
 │   ├── Solution Architecture - ASMCalc.md
 │   ├── Software Design - ASMCalc.md
@@ -127,9 +129,7 @@ ASMCalc/
 │
 ├── Makefile                   # GNU Make compiler/linker instructions
 ├── README.md                  # Developer manual
-├── claude.md                  # Claude/AI reference file
-├── setup_env.bat              # Environment Bootstrap script
-└── .gitignore                 # Excludes .obj and .exe artifacts
+└── setup_env.bat              # Environment Bootstrap script
 ```
 
 ---

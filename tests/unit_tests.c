@@ -180,10 +180,10 @@ int main() {
     printf("Testing ftoa_conv...\n");
     char buf[64];
     ftoa_conv(123.45, buf);
-    assert(strncmp(buf, "123.45", 6) == 0); // sprintf formatting might add trailing zeros, so check prefix
+    assert(strcmp(buf, "123.45") == 0);
     
     ftoa_conv(-0.0125, buf);
-    assert(strncmp(buf, "-0.0125", 7) == 0);
+    assert(strcmp(buf, "-0.01") == 0);
     printf("ftoa_conv passed.\n\n");
 
     printf("===================================================\n");
