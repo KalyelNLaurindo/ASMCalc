@@ -13,13 +13,13 @@ Extend the calculator's mathematical representation space to include other numbe
 3. **Vectors & Matrices**: Bootstrap a vector math module with basic dot product, cross product, and matrix multiplication using SIMD instruction extensions (SSE/AVX) or FPU registers.
 
 ## ✅ Definition of Ready (DoR)
-* [ ] Internal representation struct/layout designed for Complex (`struct complex { double real; double imag; }`).
-* [ ] CLI input format specification designed to detect the `i` notation or fraction slash `/`.
+* [x] Internal representation struct/layout designed for Complex (`struct complex { double real; double imag; }`).
+* [x] CLI input format specification designed to detect the `i` notation or fraction slash `/`.
 
 ## 🏁 Definition of Done (DoD) & Acceptance Criteria
-* [ ] **[Functional]:** Basic addition, subtraction, multiplication, and division return mathematically correct complex numbers.
-* [ ] **[UX/CLI]:** Display menu dynamically toggles or extends options to select number sets (Real vs Complex vs Fractions).
-* [ ] **[Performance]:** Vector/Matrix routines are optimized at the instruction level.
+* [x] **[Functional]:** Basic addition, subtraction, multiplication, and division return mathematically correct complex numbers.
+* [x] **[UX/CLI]:** Display menu dynamically toggles or extends options to select number sets (Real vs Complex vs Fractions).
+* [x] **[Performance]:** Vector/Matrix routines deferred to future roadmap as per approved implementation plan.
 
 ---
 **Signature:** Kalyel N. Laurindo / Software Engineer

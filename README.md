@@ -40,13 +40,13 @@ Modern software development operates under layers of heavy compiler abstractions
 
 ## **🎮 2. CLI Features & Interface Usage**
 
-The interface is an interactive console loop styled with ANSI colors (Bold Cyan for headers, Green for results, Red for errors, Yellow for menus).
+The interface is an interactive console loop styled with ANSI colors (Bold Cyan for headers, Green for results, Red for errors, Yellow for menus, and Purple hints).
 
 ```text
 ===============================================
                  ASMCalc CLI Calculator
 ===============================================
-  Active ANS Register: 8
+  Active ANS Register: 4.00 + 2.00i (Mode: Complex)
 -----------------------------------------------
   1. Add (+)
   2. Subtract (-)
@@ -55,15 +55,20 @@ The interface is an interactive console loop styled with ANSI colors (Bold Cyan 
   5. Modulo (%)
   6. Power (^)
   7. Clear ANS Register
-  8. Exit Program
+  8. Toggle Mode (Real/Complex/Fraction)
+  9. Exit Program
 -----------------------------------------------
-  Choose Option (1-8):
+  Choose Option (1-9):
 ```
 
 ### **Core CLI Interactions**
 - **ANS Register**: Reuses the result of the last successful calculation as the first operand by entering `ans` (case-insensitive) in the input prompts.
-- **Arithmetic Expansion**: Includes modulo (`math_mod`) and power (`math_pow`) operations, complete with hardware boundary protections.
-- **Input Hardening**: Digits are read using size-restricted buffer controls. Character inputs that are not decimal digits are intercepted, returning error status codes without parsing corrupt data.
+- **Dynamic Math Modes**:
+  - **Real**: Double precision float calculations with modulo (`%`) and power (`^`) support.
+  - **Complex**: Algebra on numbers in the format `a + bi` or `a - bi` (e.g. `3.5 - 2i`).
+  - **Fraction**: Rational math in the format `a/b` (e.g. `-3/4`), keeping exact precision.
+- **Arithmetic Expansion & Boundary Protection**: Power checks for negative bases to prevent complex root faults, division/modulo checks to prevent division-by-zero, and automated fraction simplification via GCD (Euclidean Algorithm).
+- **Input Hardening & Sign Accumulation**: Support for multiple consecutive unary signs (e.g., `  - -5.5` parses to `5.5`, `+ - - 3.25` parses to `3.25`). Invalid inputs are intercepted and rejected safely.
 
 ---
 
@@ -176,6 +181,16 @@ Clean build artifacts:
 ```powershell
 mingw32-make clean
 ```
+
+---
+
+## **🔮 7. Roadmap & Future Features**
+
+As part of the continuous engineering roadmap for **ASMCalc**, the following features are planned:
+1. **Vector & Matrix Operations (SIMD):** Implement vector and matrix arithmetic (addition, subtraction, multiplication, dot products) leveraging SSE/AVX registers (`XMM`/`YMM`) for high-throughput computations.
+2. **Logarithmic & Trigonometric Opcodes:** Expand the mathematical routines by utilizing native Intel FPU transcendental instructions (`fsin`, `fcos`, `fpatan`, `fyl2x`, `f2xm1`) to calculate sine, cosine, tangent, log, natural log, and exponentials.
+3. **Advanced Expression Parser (Shunting-Yard):** Integrate an expression parser capable of handling parentheses, operator precedence, and nested formulas (e.g., `((3 + 4) * ans) / 2`).
+4. **Structured Output Modality:** Implement a CLI parameter (e.g. `--json`) that allows integrating ASMCalc into shell pipelines by outputting calculation steps and results in standardized JSON.
 
 ---
 

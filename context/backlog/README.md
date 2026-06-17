@@ -92,10 +92,36 @@
   * *Epic/Requirement Link:* RF01, RF02  
   * *Estimation/Priority:* Medium  
   * *TDD Test File:* `tests/unit_tests.c`  
-  * *Status:* To Do
+  * *Status:* Done
 
 * **[[TSK-11](TSK-11.md)]: Support for Complex Numbers and Alternative Representation Sets**  
   * *Epic/Requirement Link:* RF01, RF05  
+  * *Estimation/Priority:* Low  
+  * *TDD Test File:* `tests/unit_tests.c`  
+  * *Status:* Done
+
+### **📦 Backlog Phase 7: Advanced Feature Set Roadmap**
+
+* **[[TSK-12](TSK-12.md)]: Vector & Matrix Operations (SIMD)**  
+  * *Epic/Requirement Link:* RF01, RF06  
+  * *Estimation/Priority:* Medium  
+  * *TDD Test File:* `tests/unit_tests.c`  
+  * *Status:* To Do
+
+* **[[TSK-13](TSK-13.md)]: Logarithmic & Trigonometric Opcodes**  
+  * *Epic/Requirement Link:* RF01, RF07  
+  * *Estimation/Priority:* Low  
+  * *TDD Test File:* `tests/unit_tests.c`  
+  * *Status:* To Do
+
+* **[[TSK-14](TSK-14.md)]: Advanced Expression Parser (Shunting-Yard)**  
+  * *Epic/Requirement Link:* RF02, RF08  
+  * *Estimation/Priority:* Medium  
+  * *TDD Test File:* `tests/unit_tests.c`  
+  * *Status:* To Do
+
+* **[[TSK-15](TSK-15.md)]: Structured Output Modality (JSON)**  
+  * *Epic/Requirement Link:* RF02, RF09  
   * *Estimation/Priority:* Low  
   * *TDD Test File:* `tests/unit_tests.c`  
   * *Status:* To Do
@@ -106,8 +132,10 @@
 
 ### **🔴 To Do (Ready for Development)**
 
-* [ ] **[[TSK-10](TSK-10.md)]:** Extended Negative Number Support & Boundary Validation
-* [ ] **[[TSK-11](TSK-11.md)]:** Support for Complex Numbers and Alternative Representation Sets
+* [ ] **[[TSK-12](TSK-12.md)]:** Vector & Matrix Operations (SIMD)
+* [ ] **[[TSK-13](TSK-13.md)]:** Logarithmic & Trigonometric Opcodes
+* [ ] **[[TSK-14](TSK-14.md)]:** Advanced Expression Parser (Shunting-Yard)
+* [ ] **[[TSK-15](TSK-15.md)]:** Structured Output Modality (JSON)
 
 ### **🟡 In Progress (Actively Being Built)**
 
@@ -128,6 +156,8 @@
 * [x] **[[TSK-07](TSK-07.md)]:** FPU Core Arithmetic Engine (math.asm)
 * [x] **[[TSK-08](TSK-08.md)]:** Float Parsing and Formatting Routines (io.asm)
 * [x] **[[TSK-09](TSK-09.md)]:** CLI Menu & ANS Adaptation for Floats (main.asm)
+* [x] **[[TSK-10](TSK-10.md)]:** Extended Negative Number Support & Boundary Validation
+* [x] **[[TSK-11](TSK-11.md)]:** Support for Complex Numbers and Alternative Representation Sets
 
 ---
 
