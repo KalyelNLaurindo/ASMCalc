@@ -1,0 +1,18 @@
+# ASMCalc Build Artifacts
+*.obj
+*.exe
+*.o
+
+# Temporary test/build directories
+build/
+
+# OS/IDE metadata
+.vs/
+.idea/
+.vscode/
+Thumbs.db
+Desktop.ini
+
+claude.md
+
+# CLAUDE.md
