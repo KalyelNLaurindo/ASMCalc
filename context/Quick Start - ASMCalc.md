@@ -19,7 +19,7 @@ Before setting up the project, make sure you have the following environments ins
 ### Step 1: Navigate to the Project Directory
 Ensure your terminal is located inside the `ASMCalc` project folder:
 ```bash
-cd "e:\Software Projects\Software Engineering Portfolio\15-sistemas-legados\ASMCalc"
+cd "D:\Software Projects\Portifolio\18-sistemas-legados\ASMCalc"
 ```
 
 ### Step 2: Build the Executable
