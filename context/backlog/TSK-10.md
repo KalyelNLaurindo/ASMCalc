@@ -13,13 +13,13 @@ Implement deep verification, boundary checks, and robust formatting for operatio
 3. Parsing of inputs with multiple consecutive unary operators (e.g. `5 + -3` or `-5 * -2`).
 
 ## ✅ Definition of Ready (DoR)
-* [ ] FPU stack exception status flags analyzed.
-* [ ] Input parser constraints for negative signs and operators mapped.
+* [x] FPU stack exception status flags analyzed.
+* [x] Input parser constraints for negative signs and operators mapped.
 
 ## 🏁 Definition of Done (DoD) & Acceptance Criteria
-* [ ] **[Testing]:** Multi-sign negative numbers operations pass the unit tests.
-* [ ] **[Robustness]:** Operations producing imaginary outputs (e.g. `(-4)^0.5`) cleanly return NaN and do not trigger hardware faults.
-* [ ] **[Formatting]:** Negative outputs are correctly printed with prefix minus signs and exact two decimal digits without sign pollution.
+* [x] **[Testing]:** Multi-sign negative numbers operations pass the unit tests.
+* [x] **[Robustness]:** Operations producing imaginary outputs (e.g. `(-4)^0.5`) cleanly return NaN and do not trigger hardware faults.
+* [x] **[Formatting]:** Negative outputs are correctly printed with prefix minus signs and exact two decimal digits without sign pollution.
 
 ---
 **Signature:** Kalyel N. Laurindo / Software Engineer

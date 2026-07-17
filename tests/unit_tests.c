@@ -24,6 +24,34 @@ extern double math_pow(double base, double exp);
 extern int atof_conv(const char *str, double *out_val);
 extern void ftoa_conv(double val, char *buffer);
 
+struct complex {
+    double real;
+    double imag;
+};
+
+struct fraction {
+    int num;
+    int den;
+};
+
+extern void math_complex_add(struct complex *res, const struct complex *a, const struct complex *b);
+extern void math_complex_sub(struct complex *res, const struct complex *a, const struct complex *b);
+extern void math_complex_mul(struct complex *res, const struct complex *a, const struct complex *b);
+extern void math_complex_div(struct complex *res, const struct complex *a, const struct complex *b);
+
+extern int math_gcd(int a, int b);
+extern void math_fraction_simplify(struct fraction *f);
+extern void math_fraction_add(struct fraction *res, const struct fraction *a, const struct fraction *b);
+extern void math_fraction_sub(struct fraction *res, const struct fraction *a, const struct fraction *b);
+extern void math_fraction_mul(struct fraction *res, const struct fraction *a, const struct fraction *b);
+extern void math_fraction_div(struct fraction *res, const struct fraction *a, const struct fraction *b);
+
+extern int parse_complex(const char *str, double *out_real, double *out_imag);
+extern void format_complex(double real, double imag, char *buffer);
+extern int parse_fraction(const char *str, int *out_num, int *out_den);
+extern void format_fraction(int num, int den, char *buffer);
+
+
 // Static variables to save/restore registers.
 static int saved_ebx;
 static int saved_esi;
@@ -160,6 +188,12 @@ int main() {
     assert_double(test_call_with_preservation_check(math_pow, 4.0, 0.5, "math_pow"), 2.0);
     assert_double(test_call_with_preservation_check(math_pow, 2.0, -3.0, "math_pow"), 0.125);
     assert_double(test_call_with_preservation_check(math_pow, 5.0, 0.0, "math_pow"), 1.0);
+    // Negative bases with integer exponent
+    assert_double(test_call_with_preservation_check(math_pow, -2.0, 3.0, "math_pow"), -8.0);
+    assert_double(test_call_with_preservation_check(math_pow, -2.0, 4.0, "math_pow"), 16.0);
+    assert_double(test_call_with_preservation_check(math_pow, -2.0, -3.0, "math_pow"), -0.125);
+    // Negative bases with fractional exponent (NaN check)
+    assert(isnan(test_call_with_preservation_check(math_pow, -4.0, 0.5, "math_pow")));
     printf("math_pow passed.\n\n");
 
     // ----------------------------------------------------
@@ -173,6 +207,14 @@ int main() {
     assert(atof_conv("   -456.78", &val) == 0);
     assert_double(val, -456.78);
     
+    // Multiple consecutive unary operators
+    assert(atof_conv("  - -5.5", &val) == 0);
+    assert_double(val, 5.5);
+    assert(atof_conv("-+-3", &val) == 0);
+    assert_double(val, 3.0);
+    assert(atof_conv(" + - - 3.25", &val) == 0);
+    assert_double(val, 3.25);
+    
     assert(atof_conv("abc", &val) == -1);
     assert(atof_conv("12.3.4", &val) == -1);
     printf("atof_conv passed.\n\n");
@@ -184,7 +226,112 @@ int main() {
     
     ftoa_conv(-0.0125, buf);
     assert(strcmp(buf, "-0.01") == 0);
+    
+    // Negative zero formatting check
+    ftoa_conv(-0.0, buf);
+    assert(strcmp(buf, "0.00") == 0);
     printf("ftoa_conv passed.\n\n");
+
+    // ----------------------------------------------------
+    // 8. Test complex numbers (TSK-11)
+    // ----------------------------------------------------
+    printf("Testing complex numbers...\n");
+    struct complex c1 = { 3.0, 4.0 };   // 3 + 4i
+    struct complex c2 = { 1.0, -2.0 };  // 1 - 2i
+    struct complex cres;
+    
+    math_complex_add(&cres, &c1, &c2);
+    assert_double(cres.real, 4.0);
+    assert_double(cres.imag, 2.0);
+    
+    math_complex_sub(&cres, &c1, &c2);
+    assert_double(cres.real, 2.0);
+    assert_double(cres.imag, 6.0);
+    
+    math_complex_mul(&cres, &c1, &c2);
+    // (3+4i)*(1-2i) = (3*1 - 4*-2) + (3*-2 + 4*1)i = (3 + 8) + (-6 + 4)i = 11 - 2i
+    assert_double(cres.real, 11.0);
+    assert_double(cres.imag, -2.0);
+    
+    math_complex_div(&cres, &c1, &c2);
+    // (3+4i)/(1-2i) = [(3*1 + 4*-2)/5] + [(4*1 - 3*-2)/5]i = [(3 - 8)/5] + [(4 + 6)/5]i = -5/5 + 10/5 i = -1 + 2i
+    assert_double(cres.real, -1.0);
+    assert_double(cres.imag, 2.0);
+    
+    // Test complex parsing
+    double cr = 0, ci = 0;
+    assert(parse_complex("3.5 + 2.5i", &cr, &ci) == 0);
+    assert_double(cr, 3.5);
+    assert_double(ci, 2.5);
+    
+    assert(parse_complex("  -1.2-i", &cr, &ci) == 0);
+    assert_double(cr, -1.2);
+    assert_double(ci, -1.0);
+    
+    assert(parse_complex("i", &cr, &ci) == 0);
+    assert_double(cr, 0.0);
+    assert_double(ci, 1.0);
+    
+    assert(parse_complex("-i", &cr, &ci) == 0);
+    assert_double(cr, 0.0);
+    assert_double(ci, -1.0);
+
+    // Test complex formatting
+    char cbuf[64];
+    format_complex(3.5, 2.0, cbuf);
+    assert(strcmp(cbuf, "3.50 + 2.00i") == 0);
+    format_complex(1.5, -4.25, cbuf);
+    assert(strcmp(cbuf, "1.50 - 4.25i") == 0);
+    printf("complex numbers passed.\n\n");
+
+    // ----------------------------------------------------
+    // 9. Test fractions (TSK-11)
+    // ----------------------------------------------------
+    printf("Testing fraction math...\n");
+    struct fraction f1 = { 1, 3 };   // 1/3
+    struct fraction f2 = { 2, 5 };   // 2/5
+    struct fraction fres;
+    
+    math_fraction_add(&fres, &f1, &f2); // 1/3 + 2/5 = 11/15
+    assert(fres.num == 11);
+    assert(fres.den == 15);
+    
+    math_fraction_sub(&fres, &f1, &f2); // 1/3 - 2/5 = -1/15
+    assert(fres.num == -1);
+    assert(fres.den == 15);
+    
+    math_fraction_mul(&fres, &f1, &f2); // 1/3 * 2/5 = 2/15
+    assert(fres.num == 2);
+    assert(fres.den == 15);
+    
+    math_fraction_div(&fres, &f1, &f2); // (1/3) / (2/5) = 5/6
+    assert(fres.num == 5);
+    assert(fres.den == 6);
+    
+    // Fraction simplification
+    struct fraction f3 = { -4, -8 }; // -4/-8 -> 1/2
+    math_fraction_simplify(&f3);
+    assert(f3.num == 1);
+    assert(f3.den == 2);
+    
+    // Fraction parsing
+    int fn = 0, fd = 0;
+    assert(parse_fraction("3/4", &fn, &fd) == 0);
+    assert(fn == 3);
+    assert(fd == 4);
+    
+    assert(parse_fraction(" -5 ", &fn, &fd) == 0);
+    assert(fn == -5);
+    assert(fd == 1);
+    
+    // Fraction formatting
+    char fbuf[64];
+    format_fraction(3, 4, fbuf);
+    assert(strcmp(fbuf, "3/4") == 0);
+    format_fraction(-5, 1, fbuf);
+    assert(strcmp(fbuf, "-5") == 0);
+    printf("fraction math passed.\n\n");
+
 
     printf("===================================================\n");
     printf(" ALL FPU TESTS PASSED SUCCESSFULLY (GREEN)\n");

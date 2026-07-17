@@ -98,22 +98,22 @@
 
 - **Requirement RF01: Addition & Subtraction Core Subroutines**
   - _Description:_ High-performance arithmetic calculation routines using `add` and `sub` x86 opcodes.
-  - _JTBD Tracing:_ [Field 10.1 - Functional Job](file:///e:/Software%20Projects/Software%20Engineering%20Portfolio/15-sistemas-legados/ASMCalc/context/0%20-%20Problem%20Discovery%20-%20ASMCalc.md)
+  - _JTBD Tracing:_ [Field 10.1 - Functional Job](file:///D:/Software%20Projects/Portifolio/18-sistemas-legados/ASMCalc/context/Problem%20Discovery%20-%20ASMCalc.md)
 - **Requirement RF02: Console Input/Output Handlers**
   - _Description:_ Reading keyboard strings and formatting numeric results back to decimal ASCII console outputs.
-  - _JTBD Tracing:_ [Field 10.1 - Functional Job](file:///e:/Software%20Projects/Software%20Engineering%20Portfolio/15-sistemas-legados/ASMCalc/context/0%20-%20Problem%20Discovery%20-%20ASMCalc.md)
+  - _JTBD Tracing:_ [Field 10.1 - Functional Job](file:///D:/Software%20Projects/Portifolio/18-sistemas-legados/ASMCalc/context/Problem%20Discovery%20-%20ASMCalc.md)
 
 #### **🟡 Should Have (High Value, Target for Immediate Post-MVP Release)**
 
 - **Requirement RF03: Multiplication & Division Modules**
   - _Description:_ Implement signed multiplication (`imul`) and division (`idiv`) instructions with boundary safety guards.
-  - _JTBD Tracing:_ [Field 10.1 - Functional Job](file:///e:/Software%20Projects/Software%20Engineering%20Portfolio/15-sistemas-legados/ASMCalc/context/0%20-%20Problem%20Discovery%20-%20ASMCalc.md)
+  - _JTBD Tracing:_ [Field 10.1 - Functional Job](file:///D:/Software%20Projects/Portifolio/18-sistemas-legados/ASMCalc/context/Problem%20Discovery%20-%20ASMCalc.md)
 
 #### **🟢 Could Have (Desirable, Nice-to-Have, Low Urgency)**
 
 - **Requirement RF04: Negative Number Support**
   - _Description:_ Format, read, and display negative signed integers.
-  - _JTBD Tracing:_ [Field 10.2 - Emotional Job](file:///e:/Software%20Projects/Software%20Engineering%20Portfolio/15-sistemas-legados/ASMCalc/context/0%20-%20Problem%20Discovery%20-%20ASMCalc.md)
+  - _JTBD Tracing:_ [Field 10.2 - Emotional Job](file:///D:/Software%20Projects/Portifolio/18-sistemas-legados/ASMCalc/context/Problem%20Discovery%20-%20ASMCalc.md)
 
 ---
 
